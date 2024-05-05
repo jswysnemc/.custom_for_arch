@@ -1,0 +1,88 @@
+#!/bin/bun run
+
+function formatTimestamp(timestamp) {
+  let date = new Date(timestamp);
+  let year = date.getFullYear();
+  let month = String(date.getMonth() + 1).padStart(2, "0");
+  let day = String(date.getDate()).padStart(2, "0");
+  let hours = String(date.getHours()).padStart(2, "0");
+  let minutes = String(date.getMinutes()).padStart(2, "0");
+  let seconds = String(date.getSeconds()).padStart(2, "0");
+
+  return {
+    year: year,
+    month: month,
+    day: day,
+    hours: hours,
+    minutes: minutes,
+    seconds: seconds,
+    weekDay: date.toLocaleString("default", { weekday: "short" }),
+
+    get format_str_nong() {
+      return `${year}-${String(date.getMonth() + 1)}-${String(date.getDate())}`;
+    },
+
+    get format_str() {
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+  };
+}
+
+const fetch = require("node-fetch");
+const fs = require("fs");
+
+const filePath = "/home/snemc/tmp/var/weather.json";
+const timeoutThreshold = 1000 * 60 * 10; // 一分钟
+
+const data_write_to_file = (data, filePath) => {
+  fs.writeFile(filePath, data, (err) => {
+    if (err) throw new Error(`写入失败:${err}`);
+  });
+};
+
+const getData_from_api = () => {
+  let lastFetchTime = Date.now();
+
+  const fetchData = () => {
+    fetch("http://aider.meizu.com/app/weather/listWeather?cityIds=101200301")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return res.json();
+      })
+      .then((data) => {
+        data["last_update"] = formatTimestamp(Date.now()).format_str;
+
+        fetch(
+          `https://www.36jxs.com/api/Commonweal/almanac?sun=${
+            formatTimestamp(new Date().getTime()).format_str_nong
+          }`
+        )
+          .then((res) => res.json())
+          .then((_data) => {
+            data["nong_data"] = _data;
+            console.log(`[${data["last_update"]}]更新一次`);
+            data_write_to_file(JSON.stringify(data, null, "  "), filePath);
+            lastFetchTime = Date.now();
+          });
+      })
+      .catch((error) => {
+        console.error("Fetch error:", error.message);
+      });
+  };
+
+  const checkConnection = () => {
+    const currentTime = Date.now();
+    if (currentTime - lastFetchTime > timeoutThreshold) {
+      console.log("超时，重新获取数据...");
+      fetchData();
+    }
+    setTimeout(checkConnection, 1000); // 每秒检查一次连接状态
+  };
+
+  fetchData(); // 初始化获取数据
+  checkConnection(); // 开始检查连接状态
+};
+
+getData_from_api();

@@ -1,0 +1,33 @@
+#!/bin/bun run
+const { log } = require('console');
+const express = require('express');
+
+const bodyParser = require('body-parser');
+
+const app = express();
+
+
+
+// 使用 body-parser 中间件来解析请求体
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+app.post('/proxy', async (req, res) => {
+
+    res.header('Access-Control-Allow-Origin', '*');
+
+    log('代理:', req.body.url)
+
+    fetch(req.body.url)
+    .then(_res => _res.json())
+    .then(_data => {
+        res.send(_data)
+    })
+
+});
+
+
+app.listen(9527, () => {
+    console.log('Server is running on http://localhost:9527/proxy');
+})

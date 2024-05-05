@@ -1,0 +1,18 @@
+{
+    "code-runner.executorMap": {
+        "cpp": "make  &&  ./bin/main #",
+        "c":   "make  &&  ./bin/main #",
+    },
+    "C_Cpp.autocomplete": "disabled",
+    // "C_Cpp.intelliSenseEngine": "disabled",
+
+    "C_Cpp.errorSquiggles": "disabled",
+    "code-runner.runInTerminal": true,
+    "clangd.fallbackFlags": [
+        // 设置clangd代码检查的c++版本，目前默认是c++14
+        // "-std=c++2a",
+        // "-I${workspaceFolder}", // 项目根目录
+        // "-I${workspaceFolder}/src/include",
+        // "-I${workspaceFolder}/include"
+    ],
+}
